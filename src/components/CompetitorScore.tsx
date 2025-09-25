@@ -25,45 +25,52 @@ const CompetitorScore = ({
   onTogglePenalty,
   onToggleJogai,
 }: CompetitorScoreProps) => {
-  const bgColor = color === "red" ? "bg-red-300" : "bg-blue-300"
+  const textColor = color === "red" ? "text-red-600" : "text-blue-600"
   const accent = color === "red" ? "red" : "blue"
 
+  const admin = false
+
   return (
-    <div className={`${bgColor} w-full flex flex-col items-center p-4 gap-4`}>
+    <div className="w-full flex flex-col items-center p-4 gap-4">
       <h2 className="text-xl font-bold">{name}</h2>
       <h2 className="text-md italic">{dojo}</h2>
-      <h2 className="text-9xl font-extrabold">{score}</h2>
+      <h2 className={`text-9xl font-extrabold ${textColor}`}>{score}</h2>
 
-      <div className="flex gap-2">
-        <button
-          onClick={onAddPoint}
-          className="px-4 py-2 bg-green-500 text-white rounded"
-        >
-          +1
-        </button>
-        <button
-          onClick={onRemovePoint}
-          className="px-4 py-2 bg-red-500 text-white rounded"
-        >
-          -1
-        </button>
+      {
+        admin &&
+        <div className="flex gap-2">
+          <button
+            onClick={onAddPoint}
+            className="px-4 py-2 bg-green-500 text-white rounded"
+            >
+            +1
+          </button>
+          <button
+            onClick={onRemovePoint}
+            className="px-4 py-2 bg-red-500 text-white rounded"
+            >
+            -1
+          </button>
+        </div>
+      }
+
+      <div className="flex flex-col gap-2">
+        <Penalty
+          title="Penalidades"
+          labels={["C", "K", "HC", "H"]}
+          active={penalties}
+          onToggle={onTogglePenalty}
+          color={accent}
+          />
+
+        <Penalty
+          title="Jogai"
+          labels={["C", "K", "HC", "H"]}
+          active={jogai}
+          onToggle={onToggleJogai}
+          color={accent}
+          />
       </div>
-
-      <Penalty
-        title="Penalidades"
-        labels={["C", "K", "HC", "H"]}
-        active={penalties}
-        onToggle={onTogglePenalty}
-        color={accent}
-      />
-
-      <Penalty
-        title="Jogai"
-        labels={["C", "K", "HC", "H"]}
-        active={jogai}
-        onToggle={onToggleJogai}
-        color={accent}
-      />
     </div>
   )
 }

@@ -57,6 +57,19 @@ const Scoreboard = () => {
     }
   }, [timeLeft])
 
+  const [admin, setAdmin] = useState(false)
+
+  useEffect(() => {
+    const userAgent = typeof window !== "undefined" ? navigator.userAgent : ""
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        userAgent
+      )
+    if (isMobile) {
+      setAdmin(true)
+    }
+  }, [])
+
 	// Definir a luta pelas penalidades
 	useEffect(() => {
   competitors.forEach((c, index) => {
@@ -88,7 +101,7 @@ const Scoreboard = () => {
   const formatTime = (s: number) => {
     const min = Math.floor(s / 60)
     const sec = s % 60
-    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+    return `${String(min).padStart(1, "0")}:${String(sec).padStart(2, "0")}`
   }
 
   const handleStart = () => {
@@ -97,59 +110,37 @@ const Scoreboard = () => {
   }
 
   return (
-    <div className="flex flex-col w-screen h-screen">
-      {/* Cronômetro */}
-      <div className="text-center bg-black text-white text-5xl font-bold py-4">
-        {formatTime(timeLeft)}
-      </div>
-
+    <div className="flex flex-col w-screen h-screen justify-center">
+      
       {/* Configuração de tempo */}
-      <div className="flex justify-center space-x-4 py-4">
-        <label className="flex items-center gap-2">
-          Duração:
-          <select
-            value={matchDuration}
-            disabled={isRunning}
-            onChange={(e) => setMatchDuration(Number(e.target.value))}
-            className="border p-2 rounded"
-          >
-            <option value={60}>1 min</option>
-            <option value={120}>2 min</option>
-            <option value={180}>3 min</option>
-            <option value={300}>5 min</option>
-          </select>
-        </label>
-      </div>
-
-      {/* Controles do cronômetro */}
-      <div className="flex justify-center space-x-4 py-4">
-        <button
-          onClick={handleStart}
-          disabled={isRunning || timeLeft === 0}
-          className="px-4 py-2 bg-green-600 text-white rounded"
-        >
-          Iniciar
-        </button>
-        <button
-          onClick={() => setIsRunning(false)}
-          disabled={!isRunning}
-          className="px-4 py-2 bg-yellow-500 text-white rounded"
-        >
-          Pausar
-        </button>
-        <button
-          onClick={() => {
-            setIsRunning(false)
-            setTimeLeft(matchDuration) // reinicia com a duração escolhida
-          }}
-          className="px-4 py-2 bg-red-600 text-white rounded"
-        >
-          Resetar
-        </button>
-      </div>
+      {
+        admin &&
+        <div className="flex justify-center space-x-4 py-4">
+          <label className="flex items-center gap-2">
+            Duração:
+            <select
+              value={matchDuration}
+              disabled={isRunning}
+              onChange={(e) => setMatchDuration(Number(e.target.value))}
+              className="border p-2 rounded"
+            >
+              <option value={60}>1 min</option>
+              <option value={120}>2 min</option>
+              <option value={180}>3 min</option>
+              <option value={300}>5 min</option>
+            </select>
+          </label>
+        </div>
+      }
 
       {/* Competidores */}
-      <div className="flex flex-1">
+      <div className="relative flex">
+        {/* Cronômetro */}
+        <div className="text-center text-7xl font-bold
+        rounded-full py-4 px-6 fixed w-screen">
+          {formatTime(timeLeft)}
+        </div>
+
         {competitors.map((competitor, index) => (
           <CompetitorScore
             key={competitor.color}
@@ -188,6 +179,36 @@ const Scoreboard = () => {
       <div className="p-4 text-center bg-gray-200 font-bold text-xl">
         {getWinner()}
       </div>
+
+      {/* Controles do cronômetro */}
+      {
+        admin &&
+        <div className="flex justify-center space-x-4 py-4">
+          <button
+            onClick={handleStart}
+            disabled={isRunning || timeLeft === 0}
+            className="px-4 py-2 bg-green-600 text-white rounded"
+            >
+            Iniciar
+          </button>
+          <button
+            onClick={() => setIsRunning(false)}
+            disabled={!isRunning}
+            className="px-4 py-2 bg-yellow-500 text-white rounded"
+            >
+            Pausar
+          </button>
+          <button
+            onClick={() => {
+              setIsRunning(false)
+              setTimeLeft(matchDuration) // reinicia com a duração escolhida
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded"
+            >
+            Resetar
+          </button>
+        </div>
+      }
     </div>
   )
 }
