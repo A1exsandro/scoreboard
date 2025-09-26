@@ -1,17 +1,18 @@
-import Penalty from "./Penalty"
+import Penalty from "./Penalty";
 
 type CompetitorScoreProps = {
-  name: string
-  dojo: string
-  color: "red" | "blue"
-  score: number
-  penalties: { [key: string]: boolean }
-  jogai: { [key: string]: boolean }
-  onAddPoint: () => void
-  onRemovePoint: () => void
-  onTogglePenalty: (key: string) => void
-  onToggleJogai: (key: string) => void
-}
+  name: string;
+  dojo: string;
+  color: "red" | "blue";
+  score: number;
+  penalties: { [key: string]: boolean };
+  jogai: { [key: string]: boolean };
+  onAddPoint: () => void;
+  onRemovePoint: () => void;
+  onTogglePenalty: (key: string) => void;
+  onToggleJogai: (key: string) => void;
+  admin: boolean;
+};
 
 const CompetitorScore = ({
   name,
@@ -24,11 +25,10 @@ const CompetitorScore = ({
   onRemovePoint,
   onTogglePenalty,
   onToggleJogai,
+  admin,
 }: CompetitorScoreProps) => {
-  const textColor = color === "red" ? "text-red-600" : "text-blue-600"
-  const accent = color === "red" ? "red" : "blue"
-
-  const admin = false
+  const textColor = color === "red" ? "text-red-600" : "text-blue-600";
+  const accent = color === "red" ? "red" : "blue";
 
   return (
     <div className="w-full flex flex-col items-center p-4 gap-4">
@@ -36,43 +36,19 @@ const CompetitorScore = ({
       <h2 className="text-md italic">{dojo}</h2>
       <h2 className={`text-9xl font-extrabold ${textColor}`}>{score}</h2>
 
-      {
-        admin &&
+      {admin && (
         <div className="flex gap-2">
-          <button
-            onClick={onAddPoint}
-            className="px-4 py-2 bg-green-500 text-white rounded"
-            >
-            +1
-          </button>
-          <button
-            onClick={onRemovePoint}
-            className="px-4 py-2 bg-red-500 text-white rounded"
-            >
-            -1
-          </button>
+          <button onClick={onAddPoint} className="px-4 py-2 bg-green-500 text-white rounded">+1</button>
+          <button onClick={onRemovePoint} className="px-4 py-2 bg-red-500 text-white rounded">-1</button>
         </div>
-      }
+      )}
 
       <div className="flex flex-col gap-2">
-        <Penalty
-          title="Penalidades"
-          labels={["C", "K", "HC", "H"]}
-          active={penalties}
-          onToggle={onTogglePenalty}
-          color={accent}
-          />
-
-        <Penalty
-          title="Jogai"
-          labels={["C", "K", "HC", "H"]}
-          active={jogai}
-          onToggle={onToggleJogai}
-          color={accent}
-          />
+        <Penalty title="Penalidades" labels={["C", "K", "HC", "H"]} active={penalties} onToggle={onTogglePenalty} color={accent} />
+        <Penalty title="Jogai" labels={["C", "K", "HC", "H"]} active={jogai} onToggle={onToggleJogai} color={accent} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CompetitorScore
+export default CompetitorScore;

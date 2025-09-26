@@ -1,129 +1,113 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-import CompetitorScore from "@/components/CompetitorScore"
+"use client";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import CompetitorScore from "@/components/CompetitorScore";
+import { useSocket } from "@/hooks/useSocket";
 
-const labels = ["C", "K", "HC", "H"]
-const initPenalties = () => Object.fromEntries(labels.map((l) => [l, false]))
+const labels = ["C", "K", "HC", "H"];
+const initPenalties = () => Object.fromEntries(labels.map((l) => [l, false]));
 
 type Competitor = {
-  name: string
-  dojo: string
-  color: "red" | "blue"
-  score: number
-  penalties: { [key: string]: boolean }
-  jogai: { [key: string]: boolean }
-}
+  name: string;
+  dojo: string;
+  color: "red" | "blue";
+  score: number;
+  penalties: { [key: string]: boolean };
+  jogai: { [key: string]: boolean };
+};
 
 const Scoreboard = () => {
-  const [competitors, setCompetitors] = useState<Competitor[]>([
-    {
-      name: "Alexsandro",
-      dojo: "Karatech",
-      color: "blue",
-      score: 0,
-      penalties: initPenalties(),
-      jogai: initPenalties(),
-    },
-    {
-      name: "Rival",
-      dojo: "Shotokan",
-      color: "red",
-      score: 0,
-      penalties: initPenalties(),
-      jogai: initPenalties(),
-    },
-  ])
+  const socket = useSocket();
 
-  const [matchDuration, setMatchDuration] = useState(60) // duração em segundos (padrão 1 min)
-  const [timeLeft, setTimeLeft] = useState(matchDuration)
-  const [isRunning, setIsRunning] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [competitors, setCompetitors] = useState<Competitor[]>([
+    { name: "Alexsandro", dojo: "Karatech", color: "blue", score: 0, penalties: initPenalties(), jogai: initPenalties() },
+    { name: "Rival", dojo: "Shotokan", color: "red", score: 0, penalties: initPenalties(), jogai: initPenalties() },
+  ]);
+
+  const [matchDuration, setMatchDuration] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(matchDuration);
+  const [isRunning, setIsRunning] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [admin, setAdmin] = useState(false);
+
+  // Detecta mobile ou query string ?admin=true
+  useLayoutEffect(() => {
+    const ua = navigator.userAgent;
+    setAdmin(/Android|iPhone|iPad|iPod/i.test(ua) || window.location.search.includes("admin=true"));
+  }, []);
 
   // Cronômetro
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1)
-      }, 1000)
+      timerRef.current = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     }
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [isRunning])
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isRunning, timeLeft]);
 
   useEffect(() => {
-    if (timeLeft === 0) {
-      setIsRunning(false)
-    }
-  }, [timeLeft])
+    if (timeLeft === 0) setIsRunning(false);
+  }, [timeLeft]);
 
-  const [admin, setAdmin] = useState(false)
-
+  // Penalidade H encerra a luta
   useEffect(() => {
-    const userAgent = typeof window !== "undefined" ? navigator.userAgent : ""
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        userAgent
-      )
-    if (isMobile) {
-      setAdmin(true)
+    competitors.forEach((c, index) => {
+      if ((c.penalties["H"] || c.jogai["H"]) && timeLeft > 0) {
+        setIsRunning(false);
+        const winnerIndex = index === 0 ? 1 : 0;
+        alert(`${competitors[winnerIndex].name} venceu! ${c.name} recebeu um "H".`);
+      }
+    });
+  }, [competitors, timeLeft]);
+
+  // Envia estado se admin
+  useEffect(() => {
+    if (socket && admin) {
+      socket.emit("update-state", { competitors, timeLeft, isRunning, matchDuration });
     }
-  }, [])
+  }, [competitors, timeLeft, isRunning, matchDuration, admin, socket]);
 
-	// Definir a luta pelas penalidades
-	useEffect(() => {
-  competitors.forEach((c, index) => {
-    const hasH =
-      c.penalties["H"] || c.jogai["H"]
-    if (hasH && timeLeft > 0) {
-      // Marca o competidor como perdedor
-      setIsRunning(false)
-      // Define o outro competidor como vencedor
-      const winnerIndex = index === 0 ? 1 : 0
-      alert(`${competitors[winnerIndex].name} venceu! ${c.name} recebeu um "H".`)
-    }
-  })
-}, [competitors, timeLeft])
+  // Recebe estado
+  useEffect(() => {
+    if (!socket) return;
 
-  const updateCompetitor = (index: number, updater: (c: Competitor) => Competitor) => {
-    setCompetitors((prev) =>
-      prev.map((c, i) => (i === index ? updater(c) : c))
-    )
-  }
+    const handler = (state: any) => {
+      if (!admin) {
+        setCompetitors(state.competitors);
+        setTimeLeft(state.timeLeft);
+        setIsRunning(state.isRunning);
+        setMatchDuration(state.matchDuration);
+      }
+    };
 
-  const getWinner = () => {
-    if (timeLeft > 0) return "Combate em andamento..."
-    if (competitors[0].score > competitors[1].score) return competitors[0].name
-    if (competitors[1].score > competitors[0].score) return competitors[1].name
-    return "Empate"
-  }
+    socket.on("state-updated", handler);
 
-  const formatTime = (s: number) => {
-    const min = Math.floor(s / 60)
-    const sec = s % 60
-    return `${String(min).padStart(1, "0")}:${String(sec).padStart(2, "0")}`
-  }
+    return () => {
+      socket.off("state-updated", handler);
+    };
+  }, [socket, admin]);
+
+  const updateCompetitor = (i: number, fn: (c: Competitor) => Competitor) =>
+    setCompetitors((prev) => prev.map((c, index) => (i === index ? fn(c) : c)));
 
   const handleStart = () => {
-    setTimeLeft(matchDuration) // reseta para duração escolhida
-    setIsRunning(true)
-  }
+    setTimeLeft(matchDuration);
+    setIsRunning(true);
+  };
+
+  const formatTime = (s: number) => `${String(Math.floor(s / 60))}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <div className="flex flex-col w-screen h-screen justify-center">
-      
-      {/* Configuração de tempo */}
-      {
-        admin &&
+      {admin && (
         <div className="flex justify-center space-x-4 py-4">
-          <label className="flex items-center gap-2">
+          <label>
             Duração:
-            <select
-              value={matchDuration}
-              disabled={isRunning}
-              onChange={(e) => setMatchDuration(Number(e.target.value))}
-              className="border p-2 rounded"
-            >
+            <select value={matchDuration} disabled={isRunning} onChange={(e) => setMatchDuration(Number(e.target.value))}>
               <option value={60}>1 min</option>
               <option value={120}>2 min</option>
               <option value={180}>3 min</option>
@@ -131,87 +115,35 @@ const Scoreboard = () => {
             </select>
           </label>
         </div>
-      }
+      )}
 
-      {/* Competidores */}
       <div className="relative flex">
-        {/* Cronômetro */}
-        <div className="text-center text-7xl font-bold
-        rounded-full py-4 px-6 fixed w-screen">
+        <div className="text-center text-7xl font-bold rounded-full py-4 px-6 fixed w-screen">
           {formatTime(timeLeft)}
         </div>
 
-        {competitors.map((competitor, index) => (
+        {competitors.map((c, i) => (
           <CompetitorScore
-            key={competitor.color}
-            name={competitor.name}
-            dojo={competitor.dojo}
-            color={competitor.color}
-            score={competitor.score}
-            penalties={competitor.penalties}
-            jogai={competitor.jogai}
-            onAddPoint={() =>
-              updateCompetitor(index, (c) => ({ ...c, score: c.score + 1 }))
-            }
-            onRemovePoint={() =>
-              updateCompetitor(index, (c) => ({
-                ...c,
-                score: Math.max(c.score - 1, 0),
-              }))
-            }
-            onTogglePenalty={(key) =>
-              updateCompetitor(index, (c) => ({
-                ...c,
-                penalties: { ...c.penalties, [key]: !c.penalties[key] },
-              }))
-            }
-            onToggleJogai={(key) =>
-              updateCompetitor(index, (c) => ({
-                ...c,
-                jogai: { ...c.jogai, [key]: !c.jogai[key] },
-              }))
-            }
+            key={c.color}
+            {...c}
+            onAddPoint={() => updateCompetitor(i, (c) => ({ ...c, score: c.score + 1 }))}
+            onRemovePoint={() => updateCompetitor(i, (c) => ({ ...c, score: Math.max(c.score - 1, 0) }))}
+            onTogglePenalty={(k) => updateCompetitor(i, (c) => ({ ...c, penalties: { ...c.penalties, [k]: !c.penalties[k] } }))}
+            onToggleJogai={(k) => updateCompetitor(i, (c) => ({ ...c, jogai: { ...c.jogai, [k]: !c.jogai[k] } }))}
+            admin={admin}
           />
         ))}
       </div>
 
-      {/* Vencedor */}
-      <div className="p-4 text-center bg-gray-200 font-bold text-xl">
-        {getWinner()}
-      </div>
-
-      {/* Controles do cronômetro */}
-      {
-        admin &&
+      {admin && (
         <div className="flex justify-center space-x-4 py-4">
-          <button
-            onClick={handleStart}
-            disabled={isRunning || timeLeft === 0}
-            className="px-4 py-2 bg-green-600 text-white rounded"
-            >
-            Iniciar
-          </button>
-          <button
-            onClick={() => setIsRunning(false)}
-            disabled={!isRunning}
-            className="px-4 py-2 bg-yellow-500 text-white rounded"
-            >
-            Pausar
-          </button>
-          <button
-            onClick={() => {
-              setIsRunning(false)
-              setTimeLeft(matchDuration) // reinicia com a duração escolhida
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded"
-            >
-            Resetar
-          </button>
+          <button onClick={handleStart} disabled={isRunning || timeLeft === 0} className="px-4 py-2 bg-green-600 text-white rounded">Iniciar</button>
+          <button onClick={() => setIsRunning(false)} disabled={!isRunning} className="px-4 py-2 bg-yellow-500 text-white rounded">Pausar</button>
+          <button onClick={() => { setIsRunning(false); setTimeLeft(matchDuration); }} className="px-4 py-2 bg-red-600 text-white rounded">Resetar</button>
         </div>
-      }
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Scoreboard
-
+export default Scoreboard;
