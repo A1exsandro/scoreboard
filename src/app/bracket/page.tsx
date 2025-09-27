@@ -42,19 +42,29 @@ const Bracket = () => {
     { name: "Sandro", dojo: "Academia Cc" },
     { name: "Ale", dojo: "Academia Dd" },
     { name: "Eu", dojo: "Academia Ee" },
+    {name: 'lutador6', dojo: 'dojo6'},
+    {name: 'lutador7', dojo: 'dojo7'},
+    {name: 'lutador8', dojo: 'dojo8'},
+    {name: 'lutador9', dojo: 'dojo9'},
+    {name: 'lutador10', dojo: 'dojo10'},
+    {name: 'lutador11', dojo: 'dojo11'},
   ];
 
   const [rodadas, setRodadas] = useState<Rodada[]>([]);
   const [lutaAtual, setLutaAtual] = useState<Luta | null>(null);
   const [campeao, setCampeao] = useState<CompetidorBracket | null>(null);
+  const [secondPlace, setSecondPlace] = useState<CompetidorBracket | null>(null);
+  const [thirdPlace, setThirdPlace] = useState<CompetidorBracket | null>(null);
 
   // Competidor fictício para BYE
+  
+  
   const byeCompetitor: Competitor = {
     name: "BYE",
     dojo: "-",
     color: "red",
     score: 0,
-    penalties: { C: false, K: false, HC: false, H: false },
+    penalties: { C: false, K: false, HC: false, H: true },
     jogai: { C: false, K: false, HC: false, H: false },
   };
 
@@ -101,6 +111,10 @@ const Bracket = () => {
 
           if (vencedores.length === 1) {
             setCampeao(vencedores[0]);
+            const perdedor = ultimaRodada.lutas[0].azul === vencedores[0]
+                ? ultimaRodada.lutas[0].vermelho
+                : ultimaRodada.lutas[0].azul;
+                if (perdedor) setSecondPlace(perdedor);
           } else if (vencedores.length > 1) {
             const novasLutas: Luta[] = [];
             for (let i = 0; i < vencedores.length; i += 2) {
@@ -163,8 +177,18 @@ const Bracket = () => {
       ))}
 
       {campeao && (
-        <div className="mt-6 p-4 bg-yellow-300 rounded text-center font-bold text-xl">
-          🏆 Campeão: {campeao.name} ({campeao.dojo})
+        <div className="">
+            <div className="mt-6 p-4 bg-yellow-300 rounded text-center font-bold text-xl">
+                🏆 1º Lugar: {campeao.name} - {campeao.dojo}
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-300 rounded text-center font-bold text-xl">
+                🥈 2º Lugar: {secondPlace?.name} - {secondPlace?.dojo}
+            </div>
+
+            <div className="mt-6 p-4 bg-orange-300 rounded text-center font-bold text-xl">
+                🥉 3º Lugar: {thirdPlace?.name} - {thirdPlace?.dojo}
+            </div>
         </div>
       )}
 
