@@ -1,3 +1,4 @@
+import { useLayoutEffect, useState } from "react";
 import Penalty from "./Penalty";
 
 type CompetitorScoreProps = {
@@ -27,14 +28,24 @@ const CompetitorScore = ({
   onToggleJogai,
   admin,
 }: CompetitorScoreProps) => {
+  const [isMobile, setIsMobile] = useState(false); console.log('---- - - dentro competitorScore', isMobile)
   const textColor = color === "red" ? "text-red-600" : "text-blue-600";
   const accent = color === "red" ? "red" : "blue";
 
+  useLayoutEffect(() => {
+      const ua = navigator.userAgent;
+      setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua) || window.location.search.includes("admin=true"));
+    }, []);
+
   return (
     <div className="w-full flex flex-col items-center p-4 gap-4">
-      <h2 className="text-xl font-bold">{name}</h2>
-      <h2 className="text-md italic">{dojo}</h2>
-      <h2 className={`text-9xl font-extrabold ${textColor}`}>{score}</h2>
+      <div className={`flex ${isMobile ? 'gap-3' : 'flex-col'}`}>
+        <h2 className="text-xl font-bold">{name}</h2>
+        <h2 className="text-xl italic">{dojo}</h2>
+      </div>
+      <h2 className={`font-extrabold ${textColor}
+        ${isMobile ? 'text-5xl' : 'text-9xl'}
+      `}>{score}</h2>
 
       {admin && (
         <div className="flex gap-2">

@@ -8,7 +8,7 @@ export function useSocket() {
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io("http://192.168.18.8:3000", { path: "/api/socket" });
+      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, { path: "/api/socket" });
 
       socketRef.current.on("connect", () => {
         console.log("Socket conectado:", socketRef.current?.id);

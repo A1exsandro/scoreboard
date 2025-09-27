@@ -103,7 +103,7 @@ const Scoreboard = () => {
 
   return (
     <div className="flex flex-col w-screen h-screen justify-center">
-      {admin && (
+      {/* {admin && (
         <div className="flex justify-center space-x-4 py-4">
           <label>
             Duração:
@@ -115,24 +115,26 @@ const Scoreboard = () => {
             </select>
           </label>
         </div>
-      )}
+      )} */}
 
       <div className="relative flex">
-        <div className="text-center text-7xl font-bold rounded-full py-4 px-6 fixed w-screen">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-7xl font-bold rounded-full py-4 px-6">
           {formatTime(timeLeft)}
         </div>
 
-        {competitors.map((c, i) => (
-          <CompetitorScore
-            key={c.color}
-            {...c}
-            onAddPoint={() => updateCompetitor(i, (c) => ({ ...c, score: c.score + 1 }))}
-            onRemovePoint={() => updateCompetitor(i, (c) => ({ ...c, score: Math.max(c.score - 1, 0) }))}
-            onTogglePenalty={(k) => updateCompetitor(i, (c) => ({ ...c, penalties: { ...c.penalties, [k]: !c.penalties[k] } }))}
-            onToggleJogai={(k) => updateCompetitor(i, (c) => ({ ...c, jogai: { ...c.jogai, [k]: !c.jogai[k] } }))}
-            admin={admin}
-          />
-        ))}
+        <div className="flex flex-col md:flex-row w-full h-fit gap-20 md:gap-0">
+          {competitors.map((c, i) => (
+            <CompetitorScore
+              key={c.color}
+              {...c}
+              onAddPoint={() => updateCompetitor(i, (c) => ({ ...c, score: c.score + 1 }))}
+              onRemovePoint={() => updateCompetitor(i, (c) => ({ ...c, score: Math.max(c.score - 1, 0) }))}
+              onTogglePenalty={(k) => updateCompetitor(i, (c) => ({ ...c, penalties: { ...c.penalties, [k]: !c.penalties[k] } }))}
+              onToggleJogai={(k) => updateCompetitor(i, (c) => ({ ...c, jogai: { ...c.jogai, [k]: !c.jogai[k] } }))}
+              admin={admin}
+            />
+          ))}
+        </div>
       </div>
 
       {admin && (

@@ -11,7 +11,7 @@ type PenaltyProps = {
 
 const Penalty = ({ title, labels, active, onToggle, color = "indigo" }: PenaltyProps) => {
   return (
-    <div className="flex gap-2 justify-between">
+    <div className="flex gap-3 justify-between">
       <h3 className="font-bold">{title}</h3>
       <div className="flex gap-3">
         {labels.map((label) => (
