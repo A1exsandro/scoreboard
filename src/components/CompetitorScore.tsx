@@ -39,7 +39,7 @@ const CompetitorScore = ({
 
   return (
     <div className="w-full flex flex-col items-center p-4 gap-4">
-      <div className={`flex ${isMobile ? 'gap-3' : 'flex-col'}`}>
+      <div className={`flex ${isMobile ? 'gap-3' : 'flex-col items-center'}`}>
         <h2 className="text-xl font-bold">{name}</h2>
         <h2 className="text-xl italic">{dojo}</h2>
       </div>
